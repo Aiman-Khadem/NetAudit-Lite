@@ -5,7 +5,7 @@
 
 ---
 
-## Executive Summary (For Scholarship Reviewers)
+## Executive Summary 
 
 **NetAudit-Lite** is a foundational tool I developed in Python to perform quick audits of local networks, specifically targeting open ports and basic security misconfigurations. This project was a direct application of my programming skills to real-world infrastructure problems. Crucially, its development revealed the profound fragility of networking code when faced with unpredictable network latency and connection failures. Overcoming these **resilience challenges** formed the core learning experience, underscoring the vital need for formal academic training in network architecture and low-level protocol theory.
 
