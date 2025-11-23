@@ -1,4 +1,4 @@
-# NetAudit-Lite: Lightweight Network Configuration Auditor
+
 
 [![Language](https://img.shields.io/badge/Language-Python-blue.svg)](/)
 [![Status](https://img.shields.io/badge/Status-Prototype%20(Protocol%20Resilience%20Phase)-orange.svg)](/)
