@@ -1,0 +1,75 @@
+import socket
+from concurrent.futures import ThreadPoolExecutor
+from typing import List, Tuple
+
+# --- الإعدادات الاستراتيجية ---
+TARGET_PORTS: List[int] = [21, 22, 23, 80, 443, 3389, 8080]
+SCAN_TIMEOUT: float = 0.5  # 500 مللي ثانية - مهلة قصيرة لسرعة الفحص
+MAX_WORKERS: int = 100 # الحد الأقصى للخيوط المتزامنة (لأداء أسرع)
+
+def check_port(target_ip: str, port: int) -> Tuple[int, str]:
+    """
+    تحاول الاتصال بالمنفذ المحدد وتحدد حالته.
+    
+    المنطق:
+    1. إنشاء كائن Socket.
+    2. ضبط المهلة الزمنية.
+    3. محاولة الاتصال بالمنفذ.
+    4. إرجاع النتيجة (Open/Closed).
+    """
+    try:
+        # إنشاء كائن Socket: AF_INET لـ IPv4, SOCK_STREAM لـ TCP
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(SCAN_TIMEOUT)
+        
+        # محاولة الاتصال: connect_ex ترجع 0 إذا نجح الاتصال
+        result = s.connect_ex((target_ip, port))
+        
+        if result == 0:
+            return port, "OPEN"
+        else:
+            return port, "CLOSED"
+            
+    except socket.gaierror:
+        # خطأ في حل اسم المضيف
+        return port, "ERROR: Hostname could not be resolved"
+    except socket.error:
+        # خطأ في الاتصال (مثل رفض الاتصال)
+        return port, "ERROR: Socket error occurred"
+    finally:
+        # إغلاق الاتصال دائمًا لضمان النظافة
+        s.close()
+
+
+def scan_target(target_ip: str, ports: List[int]) -> List[Tuple[int, str]]:
+    """
+    تستخدم الخيوط المتزامنة (Threading) لفحص المنافذ بسرعة وكفاءة.
+    """
+    print(f"[*] Starting scan on target: {target_ip}...")
+    open_ports = []
+    
+    # استخدام ThreadPoolExecutor لإنشاء عمال يقومون بفحص المنافذ بالتوازي
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        # رسم الخرائط للوظيفة عبر قائمة المنافذ
+        future_to_port = {executor.submit(check_port, target_ip, port): port for port in ports}
+        
+        # تجميع النتائج أثناء اكتمالها
+        for future in concurrent.futures.as_completed(future_to_port):
+            port, status = future.result()
+            print(f"[#] Port {port}:\t {status}")
+            if status == "OPEN":
+                open_ports.append((port, status))
+
+    print("[*] Scan completed.")
+    return open_ports
+
+if __name__ == "__main__":
+    import concurrent.futures
+    try:
+        target = input("Enter the target IP address (e.g., 127.0.0.1): ")
+        # هنا يمكنك استدعاء دالة المسح
+        results = scan_target(target, TARGET_PORTS)
+        
+    except KeyboardInterrupt:
+        print("\nScan terminated by user.")
+        exit()
